@@ -25,6 +25,9 @@ const game = {
   timerInterval: null,
   startButton: null,
   // and much more
+  firstChoice: null,
+  secondChoice: null,
+  isMatching: false,
   isPlaying: false,
   cardSet:[],
 };
@@ -43,8 +46,10 @@ function startGame() {
   displayDeck();
   // Note! Do not bind below !
   // bindStartButton();
+
   // startTimer();
   game.isPlaying = true;
+  bindCardClick();
 }
 
 function displayDeck() {
@@ -84,7 +89,7 @@ function displayCards () {
       cardDiv.appendChild(cardFront);
       cardDiv.appendChild(cardBack);
 
-      console.log(carIndex)
+      // console.log(carIndex)
       carIndex++;
 
     }
@@ -101,6 +106,19 @@ function handleGameOver() {
   game.isPlaying = false
 }
 
+function clickHandler(event) {
+  var target = event.target;
+  var currentCard = target.parentNode;
+  console.log(currentCard);
+  if (!currentCard.classList.contains('card')) {
+    return;
+  }
+  if (currentCard.classList.contains('card--flipped')) {
+    return;
+  }
+  currentCard.classList.add('card--flipped');
+
+}
 /*******************************************
 /     UI update
 /******************************************/
@@ -128,7 +146,10 @@ function bindStartButton() {
 
 function unBindCardClick(card) {}
 
-function bindCardClick() {}
+function bindCardClick() {
+  var gameBoard = document.querySelector('.game-board');
+  gameBoard.addEventListener('click', clickHandler);
+}
 
 
 function shuffle(array) {
