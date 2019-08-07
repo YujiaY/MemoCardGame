@@ -30,6 +30,7 @@ const game = {
   isMatching: false,
   isPlaying: false,
   cardSet:[],
+  flippedCardsCount:0,
 };
 
 setGame();
@@ -67,14 +68,14 @@ function displayCards () {
   var cardsCount = Math.pow(cardRows, 2);
   var cardSet = [];
   for (var i =0; i < cardsCount / 2; i++) {
-    cardSet.push(CARD_TECHS_shuffled[ i % 10]);
-    cardSet.push(CARD_TECHS_shuffled[ i % 10]);
+    cardSet.push(CARD_TECHS_shuffled[ i % CARD_TECHS.length]);
+    cardSet.push(CARD_TECHS_shuffled[ i % CARD_TECHS.length]);
   }
   game.cardSet = shuffle(cardSet);
   console.log(game.cardSet);
 
   var gameBoard = document.querySelector(".game-board")
-  var carIndex = 0;
+  var cardIndex = 0;
   for (var i = 0; i < cardRows; i++ ) {
     var cardRowDiv = document.createElement('div');
     // gameBoard.appendChild(cardRowDiv);
@@ -83,18 +84,19 @@ function displayCards () {
 
     for (var j = 0; j < cardRows; j++) {
       var cardDiv = document.createElement('div');
-      gameBoard.appendChild(cardDiv).setAttribute('class', 'card ' + game.cardSet[carIndex]);
+      gameBoard.appendChild(cardDiv).setAttribute('class', 'card ' + game.cardSet[cardIndex]);
       // cardRowDiv.style['grid-template-columns'] = 'repeat(${cardRows}), 1fr)';
 
       const cardFront = document.createElement('div');
       const cardBack = document.createElement('div');
       cardFront.classList.add('card__face', 'card__face--front');
       cardBack.classList.add('card__face', 'card__face--back');
+      cardDiv.dataset.techType = game.cardSet[cardIndex];
 
       cardDiv.appendChild(cardFront);
       cardDiv.appendChild(cardBack);
 
-      carIndex++;
+      cardIndex++;
 
     }
   }
@@ -104,7 +106,12 @@ function displayCards () {
 
 function handleCardFlip() {}
 
-function nextLevel() {}
+function nextLevel() {
+  console.log('We are going to the next Level!');
+  game.currentLevel += 1;
+  game.flippedCardsCount = 0;
+  displayDeck();
+}
 
 function handleGameOver() {
   game.isPlaying = false
@@ -121,7 +128,20 @@ function clickHandler(event) {
     return;
   }
   currentCard.classList.add('card--flipped');
+  if (!game.firstChoice) {
+  game.firstChoice = currentCard.dataset.techType;
+  return;
+  }
 
+  if (game.firstChoice === currentCard.dataset.techType) {
+    handleMatch();
+  } else if (game.firstChoice != currentCard.dataset.techType) {
+    unBindCardClick();
+    setTimeout(()=> {
+      handleNotMatch();
+      bindCardClick();
+    },1000);
+  }
 }
 /*******************************************
 /     UI update
@@ -148,13 +168,47 @@ function bindStartButton() {
   })
 }
 
-function unBindCardClick(card) {}
+function unBindCardClick() {
+  var gameBoard = document.querySelector('.game-board');
+  gameBoard.removeEventListener('click',clickHandler, false);
+}
 
 function bindCardClick() {
   var gameBoard = document.querySelector('.game-board');
-  gameBoard.addEventListener('click', clickHandler);
+  gameBoard.addEventListener('click', clickHandler, false);
 }
 
+function handleMatch() {
+  console.log('matched!');
+  var matchedCards = document.querySelectorAll('.card--flipped .card__face--front');
+  matchedCards.forEach((e) => {
+    e.classList.remove('card__face--front');
+    console.log(e.classList);
+  });
+  game.firstChoice = null;
+  game.secondChoice = null;
+  game.flippedCardsCount += 2;
+  console.log(game.flippedCardsCount);
+  if (game.flippedCardsCount === game.cardSet.length) {
+    setTimeout(() => {
+      nextLevel();
+    }, 1000);
+  }
+}
+
+function handleNotMatch() {
+  console.log('Not Matched!');
+  var unmatchedCards = document.querySelectorAll('.card--flipped .card__face--front');
+  unmatchedCards.forEach((e) => {
+    // e.classList.remove('.card--flipped');
+    // console.log(e.classList);
+    console.log(e.parentElement)
+    e.parentElement.classList.remove('card--flipped');
+  })
+  game.firstChoice = null;
+  game.secondChoice = null;
+
+}
 
 function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
