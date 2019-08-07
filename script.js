@@ -63,9 +63,14 @@ function displayDeck() {
 
 function displayCards () {
   var cardRows = game.currentLevel * 2;
-  var cards = shuffle(CARD_TECHS).slice(0,2);
-  console.log(cards);
-  game.cardSet = shuffle(cards.concat(cards));
+  var CARD_TECHS_shuffled = shuffle(CARD_TECHS);
+  var cardsCount = Math.pow(cardRows, 2);
+  var cardSet = [];
+  for (var i =0; i < cardsCount / 2; i++) {
+    cardSet.push(CARD_TECHS_shuffled[ i % 10]);
+    cardSet.push(CARD_TECHS_shuffled[ i % 10]);
+  }
+  game.cardSet = shuffle(cardSet);
   console.log(game.cardSet);
 
   var gameBoard = document.querySelector(".game-board")
@@ -89,7 +94,6 @@ function displayCards () {
       cardDiv.appendChild(cardFront);
       cardDiv.appendChild(cardBack);
 
-      // console.log(carIndex)
       carIndex++;
 
     }
