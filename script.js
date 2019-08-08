@@ -44,6 +44,25 @@ function setGame() {
 }
 
 function startGame() {
+  if (!game.isPlaying) {
+    game.score = 0;
+    game.currentLevel = 1;
+    game.remainedTime = 60;
+    // clearInterval(game.timerInterval);
+  }
+  game.timerDisplay= document.querySelector('.game-timer__bar');
+  game.scoreDisplay= document.querySelector('.game-stats__score--value');
+  game.levelDisplay= document.querySelector('.game-stats__level--value');
+  game.levelDisplay.innerHTML = game.initLevel;
+  game.timerInterval= null;
+  game.startButton= document.querySelector('.game-stats__button');
+  game.firstChoice= null;
+  game.secondChoice= null;
+  game.isMatching= false;
+  game.isPlaying= true;
+  // game.cardSet= [];
+  game.flippedCardsCount= 0
+
   displayDeck();
   // Note! Do not bind below !
   // bindStartButton();
@@ -51,6 +70,7 @@ function startGame() {
   // startTimer();
   game.isPlaying = true;
   bindCardClick();
+  startTimer();
 }
 
 function displayDeck() {
@@ -107,20 +127,45 @@ function displayCards () {
 function handleCardFlip() {}
 
 function nextLevel() {
-  console.log('We are going to the next Level!');
+  // console.log('We are going to the next Level!');
+  game.score += game.remainedTime * 10 * game.currentLevel;
+  updateScore();
+  if (game.currentLevel === 3) {
+    return handleGameOver();
+  }
   game.currentLevel += 1;
   game.flippedCardsCount = 0;
+  game.levelDisplay.innerHTML = game.currentLevel;
+  game.remainedTime = (game.currentLevel + 1) * 30;
+  game.timerDisplay.innerHTML = `${game.remainedTime}S`;
   displayDeck();
+  updateTimerDisplay();
 }
 
 function handleGameOver() {
-  game.isPlaying = false
+  game.isPlaying = false;
+  game.startButton.innerHTML = 'New Game';
+  clearInterval(game.timerInterval);
+  updateTimerDisplay();
+  // console.log(game.remainedTime);
+  setTimeout(() => {
+    if (game.flippedCardsCount === game.cardSet.length) {
+    game.score += game.remainedTime * 10 * game.currentLevel;
+    updateScore();
+    }
+    alert(`Game Over! Your score is ${game.score}.`);
+  },1);
+  // bindStartButton();
+  //now need to click button twice to correctly start a new game.
 }
 
 function clickHandler(event) {
+  if (!game.isPlaying) {
+    return;
+  }
   var target = event.target;
   var currentCard = target.parentNode;
-  console.log(currentCard);
+  // console.log(currentCard);
   if (!currentCard.classList.contains('card')) {
     return;
   }
@@ -135,7 +180,7 @@ function clickHandler(event) {
 
   if (game.firstChoice === currentCard.dataset.techType) {
     handleMatch();
-  } else if (game.firstChoice != currentCard.dataset.techType) {
+  } else if (game.firstChoice !== currentCard.dataset.techType) {
     unBindCardClick();
     setTimeout(()=> {
       handleNotMatch();
@@ -146,9 +191,26 @@ function clickHandler(event) {
 /*******************************************
 /     UI update
 /******************************************/
-function updateScore() {}
+function updateScore() {
+  game.scoreDisplay.innerHTML = game.score;
+}
 
-function updateTimerDisplay() {}
+function startTimer() {
+  if (!game.timerInterval) {
+    game.timerInterval = setInterval(() => {
+      game.remainedTime -= 1;
+      updateTimerDisplay();
+      if (game.remainedTime === 0) {
+        // updateTimerDisplay();
+        handleGameOver();
+      }
+    }, 1000)
+  }
+}
+
+function updateTimerDisplay() {
+  game.timerDisplay.innerHTML = `${game.remainedTime}S`;
+}
 
 /*******************************************
 /     bindings
@@ -162,7 +224,7 @@ function bindStartButton() {
       startGame();
     } else if (game.isPlaying === true && gameStatus === 'End Game') {
       statusButton.innerHTML = 'New Game';
-      console.log('End to New.')
+      // console.log('End to New.')
       handleGameOver();
     }
   })
@@ -179,16 +241,18 @@ function bindCardClick() {
 }
 
 function handleMatch() {
-  console.log('matched!');
+  // console.log('matched!');
   var matchedCards = document.querySelectorAll('.card--flipped .card__face--front');
   matchedCards.forEach((e) => {
     e.classList.remove('card__face--front');
-    console.log(e.classList);
+    // console.log(e.classList);
   });
   game.firstChoice = null;
   game.secondChoice = null;
   game.flippedCardsCount += 2;
-  console.log(game.flippedCardsCount);
+  game.score += 20 * game.currentLevel;
+  updateScore();
+  // console.log(game.flippedCardsCount);
   if (game.flippedCardsCount === game.cardSet.length) {
     setTimeout(() => {
       nextLevel();
@@ -197,12 +261,12 @@ function handleMatch() {
 }
 
 function handleNotMatch() {
-  console.log('Not Matched!');
+  // console.log('Not Matched!');
   var unmatchedCards = document.querySelectorAll('.card--flipped .card__face--front');
   unmatchedCards.forEach((e) => {
     // e.classList.remove('.card--flipped');
     // console.log(e.classList);
-    console.log(e.parentElement)
+    // console.log(e.parentElement)
     e.parentElement.classList.remove('card--flipped');
   })
   game.firstChoice = null;
